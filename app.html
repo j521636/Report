@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四字熟語クイズ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Comic Neue', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #ADD8E6; /* 背景色を水色に変更 */
+            margin: 0;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 360px;
+            text-align: center;
+            padding: 20px 30px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #333333;
+        }
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        #next-btn {
+            background-color: #28a745;
+            margin-top: 20px;
+        }
+
+        #next-btn:hover {
+            background-color: #218838;
+        }
+
+        #question {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #444444;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        .correct {
+            background-color: #28a745 !important;
+        }
+
+        .wrong {
+            background-color: #dc3545 !important;
+        }
+
+        .correct-effect {
+            animation: correctEffect 1s forwards;
+        }
+
+        @keyframes correctEffect {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>四字熟語クイズ</h1>
+        <div id="level-container">
+            <button class="btn" onclick="startGame('easy')">初級</button>
+            <button class="btn" onclick="startGame('medium')">中級</button>
+            <button class="btn" onclick="startGame('hard')">上級</button>
+        </div>
+        <div id="question-container" class="hide">
+            <div id="question">ここに問題が表示されます</div>
+            <div id="answer-buttons" class="btn-container"></div>
+        </div>
+        <button id="next-btn" class="btn hide">次の問題</button>
+        <div id="score-container" class="hide">
+            <div id="score">スコア: 0</div>
+            <button class="btn" onclick="resetGame()">もう一度</button>
+        </div>
+    </div>
+    <audio id="correct-sound" src="correct-sound.mp3"></audio>
+    <audio id="wrong-sound" src="wrong-sound.mp3"></audio>
+    <script>
+        const questions = {
+            easy: [
+                {
+                    question: '「一期一会」の意味は？',
+                    answers: [
+                        { text: '一生に一度の出会い', correct: true },
+                        { text: '一日に一度会う', correct: false },
+                        { text: '一生に一度も会わない', correct: false },
+                        { text: '一度に多くの人に会う', correct: false }
+                    ]
+                },
+                {
+                    question: '「温故知新」の意味は？',
+                    answers: [
+                        { text: '昔のことを学び、新しいことを知る', correct: true },
+                        { text: '新しいことを学び、昔のことを知る', correct: false },
+                        { text: '昔のことを忘れて、新しいことを学ぶ', correct: false },
+                        { text: '新しいことを忘れて、昔のことを学ぶ', correct: false }
+                    ]
+                },
+                {
+                    question: '「百聞一見」の意味は？',
+                    answers: [
+                        { text: '百回聞くより一回見る方が良い', correct: true },
+                        { text: '一回見るより百回聞く方が良い', correct: false },
+                        { text: '百回見るより一回聞く方が良い', correct: false },
+                        { text: '一回聞くより百回見る方が良い', correct: false }
+                    ]
+                },
+                {
+                    question: '「二束三文」の意味は？',
+                    answers: [
+                        { text: '非常に安い値段', correct: true },
+                        { text: '非常に高い値段', correct: false },
+                        { text: 'ちょうど良い値段', correct: false },
+                        { text: '値段が不明', correct: false }
+                    ]
+                },
+                {
+                    question: '「一石二鳥」の意味は？',
+                    answers: [
+                        { text: '一つの行動で二つの成果を上げる', correct: true },
+                        { text: '二つの行動で一つの成果を上げる', correct: false },
+                        { text: '一つの行動で一つの成果を上げる', correct: false },
+                        { text: '二つの行動で二つの成果を上げる', correct: false }
+                    ]
+                }
+            ],
+            medium: [
+                {
+                    question: '「異口同音」の意味は？',
+                    answers: [
+                        { text: '多くの人が同じことを言う', correct: true },
+                        { text: '多くの人が異なることを言う', correct: false },
+                        { text: '一人が多くのことを言う', correct: false },
+                        { text: '一人が黙る', correct: false }
+                    ]
+                },
+                {
+                    question: '「自業自得」の意味は？',
+                    answers: [
+                        { text: '自分の行いの結果を自分で受ける', correct: true },
+                        { text: '他人の行いの結果を自分で受ける', correct: false },
+                        { text: '自分の行いの結果を他人が受ける', correct: false },
+                        { text: '他人の行いの結果を他人が受ける', correct: false }
+                    ]
+                },
+                {
+                    question: '「五里霧中」の意味は？',
+                    answers: [
+                        { text: '何もわからない状態', correct: true },
+                        { text: '霧の中で五里進む', correct: false },
+                        { text: '霧の中で道を見つける', correct: false },
+                        { text: '何も見えない状態', correct: false }
+                    ]
+                },
+                {
+                    question: '「三日坊主」の意味は？',
+                    answers: [
+                        { text: '何かを始めても長続きしない', correct: true },
+                        { text: '三日間だけ続ける', correct: false },
+                        { text: '坊主になるまで続ける', correct: false },
+                        { text: '何もしないで終わる', correct: false }
+                    ]
+                },
+                {
+                    question: '「二人三脚」の意味は？',
+                    answers: [
+                        { text: '二人で協力して物事を行う', correct: true },
+                        { text: '二人で三脚のカメラを使う', correct: false },
+                        { text: '三人で二脚の競争をする', correct: false },
+                        { text: '一人で三脚を使う', correct: false }
+                    ]
+                }
+            ],
+            hard: [
+                {
+                    question: '「質実剛健」の意味は？',
+                    answers: [
+                        { text: '飾り気がなく真面目で強い', correct: true },
+                        { text: '落ち着いていて動じない様子', correct: false },
+                        { text: '他人に頼らず自分で行動する様子', correct: false },
+                        { text: '常に変化を求める様子', correct: false }
+                    ]
+                },
+                {
+                    question: '「大器晩成」の意味は？',
+                    answers: [
+                        { text: '遅れて成功する', correct: true },
+                        { text: '策略や陰謀を巡らす', correct: false },
+                        { text: '勇敢である', correct: false },
+                        { text: '協力して行動する', correct: false }
+                    ]
+                },
+                {
+                    question: '「縦横無尽」の意味は？',
+                    answers: [
+                        { text: '自由自在に行動する', correct: true },
+                        { text: '自然のままで純真無垢', correct: false },
+                        { text: '非常に几帳面', correct: false },
+                        { text: '頑固で融通が利かない', correct: false }
+                    ]
+                },
+                {
+                    question: '「我田引水」の意味は？',
+                    answers: [
+                        { text: '自分の利益を優先する', correct: true },
+                        { text: '目標を達成するために苦労する', correct: false },
+                        { text: '目標を諦める', correct: false },
+                        { text: '楽をして目標を達成する', correct: false }
+                    ]
+                },
+                {
+                    question: '「十人十色」の意味は？',
+                    answers: [
+                        { text: '人それぞれに好みや考えが異なる', correct: true },
+                        { text: '十人が同じことを考える', correct: false },
+                        { text: '十人が同じ色を好む', correct: false },
+                        { text: '十人が違う色を嫌う', correct: false }
+                    ]
+                },
+                {
+                    question: '「馬耳東風」の意味は？',
+                    answers: [
+                        { text: '他人の意見に耳を貸さない', correct: true },
+                        { text: '風の音を聞く', correct: false },
+                        { text: '馬が東に走る', correct: false },
+                        { text: '風が東から吹く', correct: false }
+                    ]
+                }
+            ]
+        };
+
+        const levelContainer = document.getElementById('level-container');
+        const questionContainer = document.getElementById('question-container');
+        const questionElement = document.getElementById('question');
+        const answerButtonsElement = document.getElementById('answer-buttons');
+        const nextButton = document.getElementById('next-btn');
+        const scoreContainer = document.getElementById('score-container');
+        const scoreElement = document.getElementById('score');
+        const correctSound = document.getElementById('correct-sound');
+        const wrongSound = document.getElementById('wrong-sound');
+
+        let currentLevel;
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function startGame(level) {
+            currentLevel = level;
+            currentQuestionIndex = 0;
+            score = 0;
+            levelContainer.classList.add('hide');
+            questionContainer.classList.remove('hide');
+            nextButton.classList.add('hide');
+            scoreContainer.classList.add('hide');
+            showQuestion(questions[currentLevel][currentQuestionIndex]);
+        }
+
+        function showQuestion(question) {
+            resetState();
+            questionElement.innerText = question.question;
+            const shuffledAnswers = shuffle(question.answers);
+            shuffledAnswers.forEach(answer => {
+                const button = document.createElement('button');
+                button.innerText = answer.text;
+                button.classList.add('btn');
+                if (answer.correct) {
+                    button.dataset.correct = answer.correct;
+                }
+                button.addEventListener('click', selectAnswer);
+                answerButtonsElement.appendChild(button);
+            });
+        }
+
+        function resetState() {
+            nextButton.classList.add('hide');
+            while (answerButtonsElement.firstChild) {
+                answerButtonsElement.removeChild(answerButtonsElement.firstChild);
+            }
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function selectAnswer(e) {
+            const selectedButton = e.target;
+            const correct = selectedButton.dataset.correct === 'true';
+            Array.from(answerButtonsElement.children).forEach(button => {
+                setStatusClass(button, button.dataset.correct);
+            });
+            if (correct) {
+                score++;
+                correctSound.play();
+                selectedButton.classList.add('correct-effect');
+            } else {
+                wrongSound.play();
+            }
+            showNextButton();
+        }
+
+        function setStatusClass(element, correct) {
+            clearStatusClass(element);
+            if (correct === 'true') {
+                element.classList.add('correct');
+            } else {
+                element.classList.add('wrong');
+            }
+        }
+
+        function clearStatusClass(element) {
+            element.classList.remove('correct');
+            element.classList.remove('wrong');
+        }
+
+        function showNextButton() {
+            nextButton.classList.remove('hide');
+        }
+
+        function showScore() {
+            questionContainer.classList.add('hide');
+            scoreContainer.classList.remove('hide');
+            scoreElement.innerText = `スコア: ${score}`;
+        }
+
+        function resetGame() {
+            score = 0;
+            currentQuestionIndex = 0;
+            answerButtonsElement.innerHTML = '';
+            nextButton.classList.add('hide');
+            scoreContainer.classList.add('hide');
+            levelContainer.classList.remove('hide');
+        }
+
+        nextButton.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions[currentLevel].length) {
+                showQuestion(questions[currentLevel][currentQuestionIndex]);
+            } else {
+                showScore();
+            }
+        });
+    </script>
+</body>
+</html>
